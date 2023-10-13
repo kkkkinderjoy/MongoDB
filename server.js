@@ -4,14 +4,19 @@ const dotenv = require('dotenv')
 
 dotenv.config();
 
+app.use(express.json()); //글쓰기를 눌러서 body의 내용을 가져오기 위해서 두줄의 코드가 필요(복붙)
+app.use(express.urlencoded({extended: true}));
+const methodOverride = require('method-override');
+app.use(methodOverride('_method'));
+
 app.set('view engine', 'ejs');
- 
 const{MongoClient, ObjectId} = require('mongodb');
 app.use(express.static(__dirname + '/public'))
-
 let db;
 let sample; //샘플의 변수를 설정해줌
 const url =`mongodb+srv://${process.env.MONGODB_ID}:${process.env.MONGODB_PW}@cluster0.5lmfgcd.mongodb.net/`
+
+
 new MongoClient(url).connect().then((client)=>{
     db = client.db("board");
     sample = client.db("sample_training");
@@ -67,13 +72,11 @@ app.get("/view/:id",async(req,res)=>{
 // 서버는 실행 가능한 코드를 보낼 수 있다
 
 
-app.get("/home",(req,res)=>{ 
+app.get('/home',(req,res)=>{ 
     res.send("잠와..."); //리엑트에서 라우트 
 })
 
-
-
-app.get("/list", async(req,res)=>{ 
+app.get('/list', async(req,res)=>{ 
     //ejs 파일 javascript template라서 컴파일,렌더링 해줘야함 
     const result = await db.collection("notice").find().toArray() 
     //전체문서를 가져오는 방법 ? find(), 하나의 문서를 가져오는 방법 ? findOne() (파이어베이스는 getDocs/getDoc) 
@@ -88,4 +91,67 @@ app.get("/list", async(req,res)=>{
 
 
 
+//1013-2 => write 페이지 생성해서 글쓰기 버튼을 누르면 add 페이지로 이동하게 하기
+app.get('/write',(req,res)=>{ 
+    res.render('write.ejs') //리엑트에서 라우트 
+})
+
+app.post('/add',async(req,res)=>{ 
+    console.log(req.body)
+    // res.render('add.ejs')
+   try{ await db.collection("notice").insertOne({
+        title: req.body.title,
+        content:req.body.content
+    })
+    }catch(error){
+        console.log(error)
+    }
+    // res.send("성공!")
+    res.redirect('/list') //list 페이지로 바로 넘어가도록 함    
+})
+
+//1013-3
+app.put('/edit',async(req,res)=>{
+    //  수정하는 방법 updateOne({문서},{
+    //     $set : {원하는 키 : 변경값}
+    // })
+    console.log(req.body)
+    await db.collection("notice").updateOne({
+        _id: new ObjectId(req.body._id)
+    },{
+        $set :{
+            title: req.body.title,
+            content: req.body.content
+        }
+    })
+    const result ="";
+    // res.send(result)
+    res.redirect('/list')
+})
+
+
+
+
+app.get('/edit/:id',async(req,res)=>{ 
+    const result = await db.collection("notice").findOne({
+        _id: new ObjectId(req.params.id) 
+    }) 
+    res.render('edit.ejs',{
+       data:result
+    }) 
+})
+
+
+app.get('/delete/:id',async(req,res)=>{
+    console.log(req.params.id)
+    try{
+        await db.collection("notice").deleteOne({
+        _id: new ObjectId(req.params.id) 
+        }) 
+    }catch(error){
+            console.log(error)
+    }
+    res.redirect('/list')
+    
+})
 

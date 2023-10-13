@@ -13,12 +13,17 @@
     <!-- ejs 파일에서는 반복문을 for문을 씀  -->
     <!--  데이터를 그대로 보여줄려면? = 사용 /자바스크립트 문법? %만 사용 / html이 rendering 될려고 하면? - 사용 -->
     <% for(let i = 0; i < data.length; i++){ %>
-        <ul class="flex justify-between items-center border">
-            <li class="basis-2/4"><a href="/view/<%= data[i]._id %>"><%= data[i].title %></a></li>
-            <li class="basis-2/4"><%= data[i].content %></li>
+        <ul class="flex justify-between items-center border text-center">
+            <li class="basis-1/3"><a href="/view/<%= data[i]._id %>"><%= data[i].title %></a></li>
+            <li class="basis-1/3"><%= data[i].content %></li>
+            <li class="basis-1/3 flex">
+                <div><a href="/edit/<%= data[i]._id %>">✏</a></div>
+                <div><a href="/delete/<%=data[i]._id %>">🗑</a></div>
+            </li>
         </ul>
     <% } %>
+    <button class="bg-orange-300 rounded-md w-25 h-8 p-5 flex items-center mt-[15px]"><a href="/write">글쓰기</a></button>
     <!-- <%= JSON.stringify(data) %> -->
-
+    
 </body>
 </html>
