@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    <%- include('nav.ejs') %>
+    <!-- 코드를 그대로 보여주는것 ? = /코드를 렌더링 하는것? -  -->
+    <!-- <p class="text-center bg-slate-300 text-blue-500">Lorem ipsum dolor sit amet.</p> -->
+    <!-- ejs 파일에서는 반복문을 for문을 씀  -->
+    <!--  데이터를 그대로 보여줄려면? = 사용 /자바스크립트 문법? %만 사용 / html이 rendering 될려고 하면? - 사용 -->
+    <% for(let i = 0; i < data.length; i++){ %>
+        <ul class="flex justify-between items-center border">
+            <li class="basis-2/4"><a href="/view/<%= data[i]._id %>"><%= data[i].title %></a></li>
+            <li class="basis-2/4"><%= data[i].content %></li>
+        </ul>
+    <% } %>
+    <!-- <%= JSON.stringify(data) %> -->
+
+</body>
+</html>
