@@ -18,12 +18,27 @@
             <li class="basis-1/3"><%= data[i].content %></li>
             <li class="basis-1/3 flex">
                 <div><a href="/edit/<%= data[i]._id %>">✏</a></div>
-                <div><a href="/delete/<%=data[i]._id %>">🗑</a></div>
+                <div><a href="javascript:deleteFun('<%=data[i]._id %>')">🗑</a></div>
+                <!-- 작은 따옴표를 넣는 이유는? 문자열로 데이터가 넘어와야 하니깐 -->
+                <!-- /delete/<%=data[i]._id %> -->
+                <!-- javascript ? html에서 js 함수를 실행하려고 할때 쓰는 문법임 -->
             </li>
         </ul>
     <% } %>
     <button class="bg-orange-300 rounded-md w-25 h-8 p-5 flex items-center mt-[15px]"><a href="/write">글쓰기</a></button>
     <!-- <%= JSON.stringify(data) %> -->
-    
+    <script>
+        function deleteFun(data){
+            let confirmChk = confirm("정말 삭제 하시겠습니까?")
+            console.log(data) 
+            console.log(confirmChk) //true or false (확인 or 취소니깐)
+
+            if(confirmChk){
+                // console.log("확인 누름")
+                window.location.href= '/delete/'+data
+                //위에 코드는 현재 주소를 이동한다는 의미임
+            }
+        }
+    </script>
 </body>
 </html>

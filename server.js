@@ -4,8 +4,9 @@ const dotenv = require('dotenv')
 
 dotenv.config();
 
-app.use(express.json()); //글쓰기를 눌러서 body의 내용을 가져오기 위해서 두줄의 코드가 필요(복붙)
+app.use(express.json());
 app.use(express.urlencoded({extended: true}));
+ //글쓰기를 눌러서 body의 내용을 가져오기 위해서 두줄의 코드가 필요(복붙)
 const methodOverride = require('method-override');
 app.use(methodOverride('_method'));
 
@@ -78,7 +79,7 @@ app.get('/home',(req,res)=>{
 
 app.get('/list', async(req,res)=>{ 
     //ejs 파일 javascript template라서 컴파일,렌더링 해줘야함 
-    const result = await db.collection("notice").find().toArray() 
+    const result = await db.collection("notice").find().limit(5).toArray() 
     //전체문서를 가져오는 방법 ? find(), 하나의 문서를 가져오는 방법 ? findOne() (파이어베이스는 getDocs/getDoc) 
     //await ? 데이터를 다 가져올때꺄지 기다렸다가 아래 코드를 실행하세요
     console.log(result[0]); //데이터가 나오지 않을때는 async await 를 하기(공식문서에 무조건 쓰라고 나와있음)
@@ -86,9 +87,31 @@ app.get('/list', async(req,res)=>{
         data : result //전체 데이터를 가져와서 보내주기 위해서 array로 담아서 object 형태로 보내줌
     }); //props로 데이터를 보냄
 
+})
+
+app.get('/list/2', async(req,res)=>{ 
+    //ejs 파일 javascript template라서 컴파일,렌더링 해줘야함 
+    const result = await db.collection("notice").find().skip(6).limit(5).toArray() 
+    //전체문서를 가져오는 방법 ? find(), 하나의 문서를 가져오는 방법 ? findOne() (파이어베이스는 getDocs/getDoc) 
+    //await ? 데이터를 다 가져올때꺄지 기다렸다가 아래 코드를 실행하세요
+    console.log(result[0]); //데이터가 나오지 않을때는 async await 를 하기(공식문서에 무조건 쓰라고 나와있음)
+    res.render("list.ejs",{ 
+        data : result //전체 데이터를 가져와서 보내주기 위해서 array로 담아서 object 형태로 보내줌
+    }); //props로 데이터를 보냄
 
 })
 
+app.get('/list/:id', async(req,res)=>{ 
+    //ejs 파일 javascript template라서 컴파일,렌더링 해줘야함 
+    const result = await db.collection("notice").find().skip((req.params.id - 1)*5).limit(5).toArray() 
+    //전체문서를 가져오는 방법 ? find(), 하나의 문서를 가져오는 방법 ? findOne() (파이어베이스는 getDocs/getDoc) 
+    //await ? 데이터를 다 가져올때꺄지 기다렸다가 아래 코드를 실행하세요
+    console.log(result[0]); //데이터가 나오지 않을때는 async await 를 하기(공식문서에 무조건 쓰라고 나와있음)
+    res.render("list.ejs",{ 
+        data : result //전체 데이터를 가져와서 보내주기 위해서 array로 담아서 object 형태로 보내줌
+    }); //props로 데이터를 보냄
+
+})
 
 
 //1013-2 => write 페이지 생성해서 글쓰기 버튼을 누르면 add 페이지로 이동하게 하기
@@ -96,10 +119,11 @@ app.get('/write',(req,res)=>{
     res.render('write.ejs') //리엑트에서 라우트 
 })
 
+
 app.post('/add',async(req,res)=>{ 
     console.log(req.body)
     // res.render('add.ejs')
-   try{ await db.collection("notice").insertOne({
+   try{await db.collection("notice").insertOne({
         title: req.body.title,
         content:req.body.content
     })
@@ -130,8 +154,6 @@ app.put('/edit',async(req,res)=>{
 })
 
 
-
-
 app.get('/edit/:id',async(req,res)=>{ 
     const result = await db.collection("notice").findOne({
         _id: new ObjectId(req.params.id) 
@@ -142,8 +164,8 @@ app.get('/edit/:id',async(req,res)=>{
 })
 
 
-app.get('/delete/:id',async(req,res)=>{
-    console.log(req.params.id)
+app.get('/delete/:id',async(req,res)=>{ 
+    // console.log(req.params.id)
     try{
         await db.collection("notice").deleteOne({
         _id: new ObjectId(req.params.id) 
