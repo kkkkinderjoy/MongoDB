@@ -1,8 +1,19 @@
 const express = require("express"); //require은 무엇을 불러오겠다는 뜻
 const app = express() ; //2줄의 의미는 express를 세팅하기 위함
 const dotenv = require('dotenv')
+const bcrypt = require('bcrypt')
+const session = require('express-session');
+const passport = require('passport');
+const LocalStrategy = require('passport-local');
 
 dotenv.config();
+app.use(passport.initialize());
+app.use(session({
+    secret:"암호화에 쓸 비밀번호", //세션 문서의 암호화
+    resave:false, //유저가 서버로 요청할 때마다 갱신할건지
+    saveUninitialized:false //로그인 안해도 세션 만들건지 
+}))
+app.use(passport.session());
 
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
@@ -175,5 +186,69 @@ app.get('/delete/:id',async(req,res)=>{
     }
     res.redirect('/list')
     
+})
+
+passport.use(new LocalStrategy({
+    usernameField :'userid',
+    passworddField: 'password'
+}, async(userid,password,cb)=>{ //내가 입력한 아이디,비밀번호, 도중에 무언가를 실행할 때 사용하는 코드이며 passport를 로그인 되기 전에 적어줘야함
+    let result = await db.collection("users").findOne({
+        userid : userid
+    })
+    if(!result){
+        // 미들웨어? 도중에 실행하는 것. 또는, 
+      return cb(null,false,{message:'아이디나 비밀번호가 일치 하지 않음'})   
+    }
+
+    if(result.password === password){
+        return cb(null, result);
+    }else{
+        return cb(null,false,{message:'아이디나 비밀번호가 일치 하지 않음'})   
+
+    }
+}))
+
+
+app.get('/login',(req,res)=>{
+    res.render('login.ejs')
+})
+
+app.post('/login',async(req,res,next)=>{
+    // console.log(req.body);
+    //로그인 버튼을 눌렀을 때 인증을 해줘야하니깐..
+    passport.authenticate('local',(error,user,info)=>{
+        console.log(error,user,info)
+         //user가 성공했을 때 데이터 info가 실패했을 때 데이터
+         if(error) return req.status(500).json(error)
+         if(!user) return req.status(401).json(info.message)
+        req.logIn(user,(error)=>{
+          if(error) return next(error);
+           res.redirect('/')
+     }) 
+    })(req,res,next) //외우지 않고 복붙해서 쓰는 코드임
+})
+
+app.get('/register',(req,res)=>{
+    res.render('register.ejs')
+});
+
+app.post('/register',async(req,res)=>{
+    
+    let hashPass = await bcrypt.hash(req.body.password, 10); // 문자 콤마 숫자 > 얼만큼 꼴거냐? 라는 의미이며 숫자가 높을수록 느려짐
+    // console.log(hashPass)
+    // console.log(req.body) 
+    // 1.콘솔로 입력된 데이터가 터미널창에 잘 뜨는지 확인한다.
+
+     try{
+        await db.collection("users").insertOne({ 
+            // 2. 데이터베이스에 데이터를 저장해야함
+            // (req.body)로 데이터를 보낼 수 있지만 다른 정보들이 포함되어있기 때문에 정확하게 req.body.userid / req.body.password라고 적어야함 
+            userid:req.body.userid,
+            password:hashPass
+         })
+    }catch(error){
+        console.log(error)
+     }
+     res.redirect('/list')
 })
 
