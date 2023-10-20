@@ -1,20 +1,29 @@
 const express = require("express"); //require은 무엇을 불러오겠다는 뜻
 const app = express() ; //2줄의 의미는 express를 세팅하기 위함
-const dotenv = require('dotenv')
-const bcrypt = require('bcrypt')
+const dotenv = require('dotenv');
+const bcrypt = require('bcrypt');
+
 const session = require('express-session');
 const passport = require('passport');
 const LocalStrategy = require('passport-local');
+const MongoStore = require('connect-mongo');
 
-dotenv.config();
+
+dotenv.config(); //env 파일을 먼저 읽어야 하기 때문에 session 보다 위에 있어야함
 app.use(passport.initialize());
 app.use(session({
     secret:"암호화에 쓸 비밀번호", //세션 문서의 암호화
     resave:false, //유저가 서버로 요청할 때마다 갱신할건지
-    saveUninitialized:false //로그인 안해도 세션 만들건지 
-}))
-app.use(passport.session());
+    saveUninitialized:false, //로그인 안해도 세션 만들건지 
+    cookie:{maxAge: 60 * 60 * 1000}, // 쿠키 만료일을 설정할 수 있음 (1시간뒤에 사라지도록 설정함)
+    store: MongoStore.create({
+        mongoUrl:`mongodb+srv://${process.env.MONGODB_ID}:${process.env.MONGODB_PW}@cluster0.5lmfgcd.mongodb.net/`,
+        dbName:"board"
+    })
 
+}))
+
+app.use(passport.session());
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
  //글쓰기를 눌러서 body의 내용을 가져오기 위해서 두줄의 코드가 필요(복붙)
@@ -27,7 +36,7 @@ app.use(express.static(__dirname + '/public'))
 let db;
 let sample; //샘플의 변수를 설정해줌
 const url =`mongodb+srv://${process.env.MONGODB_ID}:${process.env.MONGODB_PW}@cluster0.5lmfgcd.mongodb.net/`
-
+//url은 고유번호라서 사람들마다 데이터베이스에 저장되는 문자열이 다름
 
 new MongoClient(url).connect().then((client)=>{
     db = client.db("board");
@@ -105,7 +114,7 @@ app.get('/list/2', async(req,res)=>{
     const result = await db.collection("notice").find().skip(6).limit(5).toArray() 
     //전체문서를 가져오는 방법 ? find(), 하나의 문서를 가져오는 방법 ? findOne() (파이어베이스는 getDocs/getDoc) 
     //await ? 데이터를 다 가져올때꺄지 기다렸다가 아래 코드를 실행하세요
-    console.log(result[0]); //데이터가 나오지 않을때는 async await 를 하기(공식문서에 무조건 쓰라고 나와있음)
+    //console.log(result[0]); //데이터가 나오지 않을때는 async await 를 하기(공식문서에 무조건 쓰라고 나와있음)
     res.render("list.ejs",{ 
         data : result //전체 데이터를 가져와서 보내주기 위해서 array로 담아서 object 형태로 보내줌
     }); //props로 데이터를 보냄
@@ -132,7 +141,7 @@ app.get('/write',(req,res)=>{
 
 
 app.post('/add',async(req,res)=>{ 
-    console.log(req.body)
+    // console.log(req.body)
     // res.render('add.ejs')
    try{await db.collection("notice").insertOne({
         title: req.body.title,
@@ -150,7 +159,7 @@ app.put('/edit',async(req,res)=>{
     //  수정하는 방법 updateOne({문서},{
     //     $set : {원하는 키 : 변경값}
     // })
-    console.log(req.body)
+    // console.log(req.body)
     await db.collection("notice").updateOne({
         _id: new ObjectId(req.body._id)
     },{
@@ -199,14 +208,37 @@ passport.use(new LocalStrategy({
         // 미들웨어? 도중에 실행하는 것. 또는, 
       return cb(null,false,{message:'아이디나 비밀번호가 일치 하지 않음'})   
     }
-
-    if(result.password === password){
-        return cb(null, result);
+    const passChk = await bcrypt.compare(password, result.password);
+    console.log(passChk);
+    //true 또는 false로 값이 콘솔창에 뜨게됨
+    if(passChk){
+        return cb(null, result) 
     }else{
         return cb(null,false,{message:'아이디나 비밀번호가 일치 하지 않음'})   
 
     }
 }))
+
+passport.serializeUser((user,done)=>{ //done은 session에 저장할 정보로 (null, user)
+ process.nextTick(()=>{
+    //done(null , 세션에 기록할 내용)
+    done(null, {id: user._id, userid: user.userid})
+ })
+}) //인코딩
+
+passport.deserializeUser(async(user,done)=>{
+    let result = await db.collection("users").findOne({
+        _id: new ObjectId(user.id) //위에 저장된 아이디를 몽고디비에 저장한다는 의미임
+    })    
+    delete result.password //콘솔창에 비밀번호가 삭제되어서 나타나게 됨
+    console.log(result)
+    process.nextTick(()=>{
+        done(null,result);
+    })
+}) //디코딩
+
+
+
 
 
 app.get('/login',(req,res)=>{
@@ -219,8 +251,8 @@ app.post('/login',async(req,res,next)=>{
     passport.authenticate('local',(error,user,info)=>{
         console.log(error,user,info)
          //user가 성공했을 때 데이터 info가 실패했을 때 데이터
-         if(error) return req.status(500).json(error)
-         if(!user) return req.status(401).json(info.message)
+         if(error) return res.status(500).json(error)
+         if(!user) return res.status(401).json(info.message)
         req.logIn(user,(error)=>{
           if(error) return next(error);
            res.redirect('/')
