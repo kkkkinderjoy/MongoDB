@@ -31,6 +31,7 @@
   ```bash
   npm i mongodb
   ```
+  </details>
 
 
 ### 🗓 개발 기간
