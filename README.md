@@ -17,7 +17,7 @@
 <br />
 
 ### ⚙ 개발환경
-
+<details>
 <summary> 펼치기/숨기기 </summary>
 
 - [Node.js](https://nodejs.org/ko/)
