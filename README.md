@@ -1,32 +1,47 @@
 <h2 align="center">✏TODO APP✏</h2>
-<img src="https://github.com/kkkkinderjoy/subway/assets/142365394/3b926c4e-0940-4abd-bc62-192049ac1e6f" width="970" alt="mcdonalds" >
 
 
 ### 🔗 배포링크
 
-> <https://subway-gold.vercel.app/>
+> 
 
 <br />
 
 
 ### 💻 기술스택
 
-- `HTML`, `CSS`, `Javascript`
-- `TailwindCSS`, `EXpress`, `Node.js`
+- `HTML`, `CSS`, `TailwindCSS` , `Javascript`
+- `React`, `Express.js`, `Node.js`
+- `MongoDB`
 
 <br />
 
+### ⚙ 개발환경
+
+<summary> 펼치기/숨기기 </summary>
+
+- [Node.js](https://nodejs.org/ko/)
+- Express
+  ```bash
+  npm init
+  npm i express
+  ```
+- MongoDB
+- https://cloud.mongodb.com/ 에서 클러스터 생성 > Database Access, Network Access 설정, URL 복사
+  ```bash
+  npm i mongodb
+  ```
 
 
 ### 🗓 개발 기간
-> 23.07.20 ~ 23.07.27(7일)
+> 23.10. 11 ~ 23.10.19(8일)
 
 <br />
 
 
 
 ### 프로젝트 기획 배경
-> 수업시간에 배운 html,css,jQuery를 이용하여 서브웨이 사이트를 클론 코딩하였습니다
+>
 <br />
 
 ### 프로젝트 상세 소개
